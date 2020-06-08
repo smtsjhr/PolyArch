@@ -1,5 +1,13 @@
+var record_animation = false;
+var name = "image_"
+var total_frames = 300;
+var frame = 0;
+var loop = 0;
+var total_time = 4*Math.PI;
+var rate = total_time/total_frames;
+
 var time = 0;
-var rate = 0.03;
+//var rate = 0.03;
 
 var hold = false;
 var hold_time = 0;
@@ -12,20 +20,21 @@ const color_palette = ['#00FBFF', '#1884FF', '#E87BFE']
 
 scales = 100;
 
-var N_gon = 8;
+var N_gon = 5;
 
 var random_colors = random_array(scales,color_palette.length);
 
-
+var stop_animation = false;
+var fps, fpsInterval, startTime, now, then, elapsed;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-draw();
+startAnimating(30);
 
 function draw() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = 300; //window.innerWidth;
+  canvas.height = 300; //window.innerHeight;
   
   ctx.fillStyle = 'rgba(0,0,0,1)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -48,7 +57,7 @@ function draw() {
   wiggle = 0.02*2*Math.PI + 0.5*2*Math.PI*s
   
   if (true) {
-    if ((Math.floor(time*100))%2 === 0) {
+    if (true) {
       u = t**4;
       amount = Math.floor(scales*u) + 1;
       random_update(random_colors, amount, 3);
@@ -63,7 +72,7 @@ function draw() {
             time);
   }
   
-  time += rate;
+  //time += rate;
   
   
   if (hold === true && hold_time < max_hold_time) {
@@ -98,7 +107,7 @@ function draw() {
       
  
   
-  window.requestAnimationFrame(draw);
+  //window.requestAnimationFrame(draw);
 }
 
 
@@ -157,4 +166,63 @@ function random_update(array, amount, values) {
 function easeinout(t, p) {
      let u = t**p;
      return u/(u + (1 - t)**p);
+}
+
+function startAnimating(fps) {
+    
+  fpsInterval = 1000/fps;
+  then = window.performance.now();
+  startTime = then;
+  
+  animate();
+}
+
+function animate(newtime) {
+
+  if (stop_animation) {
+      return;
+  }
+
+  requestAnimationFrame(animate);
+
+  now = newtime;
+  elapsed = now - then;
+
+  if (elapsed > fpsInterval) {
+      then = now - (elapsed % fpsInterval);
+  
+      draw();
+      console.log(hold, frame, time);
+      frame = (frame+1)%total_frames;
+      time = rate*frame;
+      if (time < total_time/2) {
+        hold = true;
+      }
+      else {
+        hold = false;
+      }
+
+      if(record_animation) {
+
+          if (loop === 1) { 
+          let frame_number = frame.toString().padStart(total_frames.toString().length, '0');
+          let filename = name+frame_number+'.png'
+              
+          dataURL = canvas.toDataURL();
+          var element = document.createElement('a');
+          element.setAttribute('href', dataURL);
+          element.setAttribute('download', filename);
+          element.style.display = 'none';
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
+          }
+
+          if (frame + 1 === total_frames) {
+              loop += 1;
+          }
+
+          if (loop === 2) { stop_animation = true }
+      }
+  }
 }
